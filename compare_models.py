@@ -49,7 +49,7 @@ def load_best_metrics(model_name: str) -> dict:
     ckpt_path = Path("checkpoints") / f"{model_name}_best.pth"
     if not ckpt_path.exists():
         return {}
-    ckpt = torch.load(ckpt_path, map_location="cpu")
+    ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     return ckpt.get("metrics", {})
 
 
