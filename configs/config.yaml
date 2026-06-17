@@ -1,0 +1,73 @@
+# ─────────────────────────────────────────────
+# Skin Lesion Detection — Central Config
+# ─────────────────────────────────────────────
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  image_size: 224
+  num_classes: 7
+  class_names:
+    - "Melanocytic nevi"        # nv
+    - "Melanoma"                # mel
+    - "Benign keratosis"        # bkl
+    - "Basal cell carcinoma"    # bcc
+    - "Actinic keratoses"       # akiec
+    - "Vascular lesions"        # vasc
+    - "Dermatofibroma"          # df
+  class_labels:
+    - nv
+    - mel
+    - bkl
+    - bcc
+    - akiec
+    - vasc
+    - df
+  train_split: 0.80
+  val_split:   0.10
+  test_split:  0.10
+
+training:
+  epochs: 50
+  batch_size: 32
+  num_workers: 4        # reduce to 0 on Windows if issues
+  seed: 42
+  early_stopping_patience: 10
+
+optimizer:
+  name: adamw
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+
+scheduler:
+  name: cosine_warm_restarts
+  T_0: 10
+  T_mult: 2
+
+loss:
+  name: focal
+  gamma: 2.0
+  alpha: null           # null = use class weights computed from data
+
+augmentation:
+  train:
+    horizontal_flip: true
+    vertical_flip: true
+    rotation_limit: 30
+    brightness_contrast: true
+    hue_saturation: true
+    random_erasing: true
+  val:
+    horizontal_flip: false
+
+model:
+  dropout: 0.4
+  pretrained: true
+  use_cbam: true
+
+checkpoints:
+  dir: "checkpoints"
+  save_best_only: true
+
+results:
+  dir: "results"

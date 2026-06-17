@@ -1,0 +1,12 @@
+data/raw/
+data/processed/
+*.zip
+*.jpg
+*.jpeg
+*.png
+checkpoints/
+*.pth
+results/
+__pycache__/
+*.pyc
+.env
