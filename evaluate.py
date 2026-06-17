@@ -116,7 +116,7 @@ def main():
                         dropout=cfg["model"]["dropout"],
                         use_cbam=cfg["model"]["use_cbam"]).to(device)
 
-    ckpt = torch.load(args.checkpoint, map_location=device)
+    ckpt = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
     print(f"Loaded checkpoint from epoch {ckpt.get('epoch', '?')}")

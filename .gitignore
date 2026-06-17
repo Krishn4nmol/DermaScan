@@ -6,7 +6,7 @@ data/processed/
 *.png
 checkpoints/
 *.pth
-results/
+results/*.csv
 __pycache__/
 *.pyc
 .env

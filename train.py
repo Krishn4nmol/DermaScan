@@ -278,7 +278,7 @@ def main():
 
     # ── Final test evaluation ─────────────────────────────────────────────────
     print("\n── Test Evaluation ──────────────────────────────")
-    ckpt = torch.load(best_ckpt, map_location=device)
+    ckpt = torch.load(best_ckpt, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["state_dict"])
 
     _, test_metrics, test_labels, test_preds, _ = evaluate(
