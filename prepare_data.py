@@ -1,19 +1,9 @@
 """
 prepare_data.py — Organize HAM10000 dataset for training.
 
-Steps:
-1. Unzip HAM10000_images_part_1.zip and HAM10000_images_part_2.zip
-   into data/processed/images/
-2. Copy HAM10000_metadata.csv into data/processed/
-3. Print class distribution
-
-Download from Kaggle first:
-  https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
-
-Place in data/raw/:
-  - HAM10000_images_part_1.zip
-  - HAM10000_images_part_2.zip
-  - HAM10000_metadata.csv
+Handles both:
+- Already extracted folders (HAM10000_images_part_1, HAM10000_images_part_2)
+- Zip files (HAM10000_images_part_1.zip, HAM10000_images_part_2.zip)
 """
 
 import os
@@ -37,52 +27,57 @@ LABEL_MAP = {
 }
 
 
-def unzip_images():
+def collect_images():
     IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-    zips = list(RAW_DIR.glob("HAM10000_images_part_*.zip"))
-    if not zips:
-        print("\n[!] No zip files found in data/raw/")
-        print("    Download from: https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000")
-        print("    Place HAM10000_images_part_1.zip and _part_2.zip in data/raw/\n")
-        return False
+    part_folders = [
+        RAW_DIR / "HAM10000_images_part_1",
+        RAW_DIR / "HAM10000_images_part_2",
+    ]
+    for folder in part_folders:
+        if folder.exists() and folder.is_dir():
+            images = list(folder.glob("*.jpg"))
+            print(f"Found {len(images)} images in {folder.name}, copying ...")
+            for img in images:
+                dest = IMAGE_DIR / img.name
+                if not dest.exists():
+                    shutil.copy2(img, dest)
+            print(f"  Done.")
 
+    zips = list(RAW_DIR.glob("HAM10000_images_part_*.zip"))
     for z in sorted(zips):
         print(f"Extracting {z.name} ...")
         with zipfile.ZipFile(z, "r") as zf:
             zf.extractall(IMAGE_DIR)
         print(f"  Done.")
 
-    # Some Kaggle versions nest images inside a subfolder — flatten them
     for sub in IMAGE_DIR.iterdir():
         if sub.is_dir():
             for img in sub.glob("*.jpg"):
                 dest = IMAGE_DIR / img.name
                 if not dest.exists():
                     shutil.move(str(img), str(dest))
-            # Remove empty subdir
             try:
                 sub.rmdir()
             except OSError:
                 pass
 
     n_images = len(list(IMAGE_DIR.glob("*.jpg")))
-    print(f"\n{n_images} images extracted to {IMAGE_DIR}")
+    print(f"\n{n_images} images ready in {IMAGE_DIR}")
+
+    if n_images == 0:
+        print("[!] No images found.")
+        return False
     return True
 
 
 def copy_metadata():
-    src = RAW_DIR / "HAM10000_metadata.csv"
-    if not src.exists():
-        # Try alternative filename from Kaggle
-        alt = RAW_DIR / "hmnist_28_28_RGB.csv"
-        src_candidates = list(RAW_DIR.glob("*.csv"))
-        if src_candidates:
-            src = src_candidates[0]
-            print(f"Using metadata file: {src.name}")
-        else:
-            print("[!] No CSV metadata found in data/raw/")
-            return False
+    candidates = list(RAW_DIR.glob("*metadata*.csv")) + list(RAW_DIR.glob("HAM*.csv"))
+    src = next((c for c in candidates if c.exists()), None)
+
+    if src is None:
+        print("[!] No metadata CSV found in data/raw/")
+        return False
 
     dest = PROCESSED_DIR / "HAM10000_metadata.csv"
     shutil.copy(src, dest)
@@ -112,11 +107,11 @@ if __name__ == "__main__":
 
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-    ok1 = unzip_images()
+    ok1 = collect_images()
     ok2 = copy_metadata()
 
     if ok1 and ok2:
         print_distribution()
-        print("[✓] Data ready. Run: python train.py --model mobilenetv3")
+        print("[✓] Data ready. Run: python train.py --model mobilenetv3 --workers 0")
     else:
-        print("\n[!] Please place the dataset files in data/raw/ and re-run.")
+        print("\n[!] Something went wrong. Check messages above.")
