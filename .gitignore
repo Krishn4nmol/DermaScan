@@ -7,3 +7,4 @@ results/*.csv
 __pycache__/
 *.pyc
 .env
+#sf
