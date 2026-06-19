@@ -8,17 +8,11 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from PIL import Image
-try:
-    import cv2
-    CV2_AVAILABLE = True
-except ImportError:
-    CV2_AVAILABLE = False
 import matplotlib.cm as cm
 from pathlib import Path
+import torchvision.transforms as T
 
 from models.backbones import build_model
-from dermascan_utils.preprocess import preprocess_image
-from dermascan_utils.dataset import get_val_transforms
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Config
@@ -52,9 +46,18 @@ MODEL_KEYS = {
     "ShuffleNetV2 (Fastest)":           "shufflenetv2",
 }
 
+IMAGENET_MEAN = [0.485, 0.456, 0.406]
+IMAGENET_STD  = [0.229, 0.224, 0.225]
+
+transform = T.Compose([
+    T.Resize((224, 224)),
+    T.ToTensor(),
+    T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+])
+
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Load model (cached)
+# Load model
 # ─────────────────────────────────────────────────────────────────────────────
 
 @st.cache_resource
@@ -68,7 +71,7 @@ def load_model(model_name: str, ckpt_path: str):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Grad-CAM
+# Grad-CAM (no cv2)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class GradCAM:
@@ -106,26 +109,21 @@ def get_target_layer(model, model_name):
 
 
 def make_overlay(image_np, cam, alpha=0.5):
-    h, w = image_np.shape[:2]
-    if CV2_AVAILABLE:
-        cam_r = cv2.resize(cam, (w, h))
-    else:
-        cam_pil = Image.fromarray((cam * 255).astype(np.uint8))
-        cam_r = np.array(cam_pil.resize((w, h))) / 255.0
-    heatmap = (cm.jet(cam_r)[:, :, :3] * 255).astype(np.uint8)
+    # Resize cam using PIL instead of cv2
+    cam_pil   = Image.fromarray((cam * 255).astype(np.uint8))
+    cam_r     = np.array(cam_pil.resize(
+                    (image_np.shape[1], image_np.shape[0]),
+                    Image.BILINEAR)) / 255.0
+    heatmap   = (cm.jet(cam_r)[:, :, :3] * 255).astype(np.uint8)
     return (alpha * heatmap + (1 - alpha) * image_np).astype(np.uint8)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Predict
 # ─────────────────────────────────────────────────────────────────────────────
 
-def predict(model, model_name, pil_image, use_preprocess=True):
-    if use_preprocess:
-        pil_image = preprocess_image(pil_image)
-
-    img_np    = np.array(pil_image)
-    transform = get_val_transforms(224)
-    tensor    = transform(image=img_np)["image"].unsqueeze(0)
+def predict(model, model_name, pil_image):
+    tensor = transform(pil_image).unsqueeze(0)
 
     with torch.no_grad():
         logits = model(tensor)
@@ -135,14 +133,13 @@ def predict(model, model_name, pil_image, use_preprocess=True):
     pred_name = CLASS_NAMES[pred_idx]
     conf      = float(probs[pred_idx])
 
-    # Grad-CAM
     target_layer = get_target_layer(model, model_name)
     gc  = GradCAM(model, target_layer)
     cam = gc(tensor, pred_idx)
     gc.remove()
 
-    img_224  = np.array(pil_image.resize((224, 224)))
-    overlay  = make_overlay(img_224, cam)
+    img_224 = np.array(pil_image.resize((224, 224)))
+    overlay = make_overlay(img_224, cam)
 
     return pred_name, conf, probs, cam, overlay
 
@@ -158,31 +155,21 @@ def main():
         layout="wide"
     )
 
-    # Header
     st.markdown("""
     <h1 style='text-align:center; color:#2C7BE5;'>🔬 DermaScan</h1>
     <h4 style='text-align:center; color:gray;'>Lightweight Deep Learning for Skin Lesion Detection</h4>
     <hr>
     """, unsafe_allow_html=True)
 
-    # Disclaimer
     st.warning("⚠️ **Medical Disclaimer:** This tool is for educational and research purposes only. It is NOT a substitute for professional medical diagnosis. Always consult a qualified dermatologist.")
 
-    # Sidebar
     st.sidebar.title("⚙️ Settings")
     model_choice = st.sidebar.selectbox(
         "Select Model",
         list(CHECKPOINTS.keys()),
         index=0
     )
-    use_preprocess = st.sidebar.checkbox(
-        "Apply Preprocessing",
-        value=True
-    )
-    show_all_probs = st.sidebar.checkbox(
-        "Show All Class Probabilities",
-        value=True
-    )
+    show_all_probs = st.sidebar.checkbox("Show All Class Probabilities", value=True)
 
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 📊 Model Info")
@@ -197,17 +184,15 @@ def main():
     st.sidebar.markdown("**Institute:** KIIT University")
     st.sidebar.markdown("[GitHub](https://github.com/Krishn4nmol/DermaScan)")
 
-    # Load model
     model_key = MODEL_KEYS[model_choice]
     ckpt_path = CHECKPOINTS[model_choice]
 
     if not Path(ckpt_path).exists():
-        st.error(f"Checkpoint not found: {ckpt_path}\nPlease train the model first.")
+        st.error(f"Checkpoint not found: {ckpt_path}")
         return
 
     model = load_model(model_key, ckpt_path)
 
-    # Upload
     st.markdown("### 📤 Upload Dermoscopic Image")
     uploaded = st.file_uploader(
         "Choose a dermoscopic image (JPG/PNG)",
@@ -220,12 +205,12 @@ def main():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
             st.markdown("**Uploaded Image**")
-            st.image(pil_image, use_column_width=True)
+            st.image(pil_image, width=300)
 
         if st.button("🔍 Analyze", type="primary", use_container_width=True):
             with st.spinner("Analyzing image..."):
                 pred_name, conf, probs, cam, overlay = predict(
-                    model, model_key, pil_image, use_preprocess
+                    model, model_key, pil_image
                 )
 
             info = CLASS_INFO[pred_name]
@@ -247,14 +232,14 @@ def main():
             c1, c2, c3 = st.columns(3)
             with c1:
                 st.markdown("**Original**")
-                st.image(pil_image.resize((224, 224)), use_column_width=True)
+                st.image(pil_image.resize((224, 224)), width=300)
             with c2:
                 st.markdown("**Attention Heatmap**")
                 cam_colored = (cm.jet(cam)[:, :, :3] * 255).astype(np.uint8)
-                st.image(cam_colored, use_column_width=True)
+                st.image(cam_colored, width=300)
             with c3:
                 st.markdown("**Overlay**")
-                st.image(overlay, use_column_width=True)
+                st.image(overlay, width=300)
 
             if show_all_probs:
                 st.markdown("### 📊 All Class Probabilities")
