@@ -8,7 +8,11 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from PIL import Image
-import cv2
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
 import matplotlib.cm as cm
 from pathlib import Path
 
@@ -103,10 +107,13 @@ def get_target_layer(model, model_name):
 
 def make_overlay(image_np, cam, alpha=0.5):
     h, w = image_np.shape[:2]
-    cam_r = cv2.resize(cam, (w, h))
+    if CV2_AVAILABLE:
+        cam_r = cv2.resize(cam, (w, h))
+    else:
+        cam_pil = Image.fromarray((cam * 255).astype(np.uint8))
+        cam_r = np.array(cam_pil.resize((w, h))) / 255.0
     heatmap = (cm.jet(cam_r)[:, :, :3] * 255).astype(np.uint8)
     return (alpha * heatmap + (1 - alpha) * image_np).astype(np.uint8)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Predict

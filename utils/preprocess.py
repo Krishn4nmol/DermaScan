@@ -5,7 +5,11 @@ Dermoscopic image preprocessing utilities.
 2. Color constancy        — Shades of Gray algorithm
 """
 
-import cv2
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
 import numpy as np
 from PIL import Image
 
