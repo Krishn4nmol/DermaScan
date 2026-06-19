@@ -1,8 +1,6 @@
 data/raw/
 data/processed/
 *.zip
-checkpoints/
-*.pth
 results/*.csv
 __pycache__/
 *.pyc
