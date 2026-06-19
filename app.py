@@ -17,8 +17,8 @@ import matplotlib.cm as cm
 from pathlib import Path
 
 from models.backbones import build_model
-from utils.preprocess import preprocess_image
-from utils.dataset import get_val_transforms
+from dermascan_utils.preprocess import preprocess_image
+from dermascan_utils.dataset import get_val_transforms
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Config

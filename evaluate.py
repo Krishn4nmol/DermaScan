@@ -21,9 +21,9 @@ import yaml
 from sklearn.metrics import classification_report
 
 from models.backbones import build_model
-from utils.dataset    import build_dataloaders, CLASS_NAMES, get_val_transforms
-from utils.losses     import FocalLoss
-from utils.metrics    import (compute_metrics, print_metrics,
+from dermascan_utils.dataset    import build_dataloaders, CLASS_NAMES, get_val_transforms
+from dermascan_utils.losses     import FocalLoss
+from dermascan_utils.metrics    import (compute_metrics, print_metrics,
                                plot_confusion_matrix)
 
 

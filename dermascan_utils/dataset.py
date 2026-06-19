@@ -19,7 +19,7 @@ from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
-from utils.preprocess import preprocess_image
+from dermascan_utils.preprocess import preprocess_image
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Label mapping

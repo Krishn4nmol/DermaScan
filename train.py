@@ -24,9 +24,9 @@ from tqdm import tqdm
 
 # ── Project imports ──────────────────────────────────────────────────────────
 from models.backbones import build_model
-from utils.dataset    import build_dataloaders, CLASS_LABELS
-from utils.losses     import FocalLoss
-from utils.metrics    import compute_metrics, print_metrics, \
+from dermascan_utils.dataset    import build_dataloaders, CLASS_LABELS
+from dermascan_utils.losses     import FocalLoss
+from dermascan_utils.metrics    import compute_metrics, print_metrics, \
                              plot_confusion_matrix, plot_training_curves
 
 
