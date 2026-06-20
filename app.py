@@ -181,7 +181,6 @@ def main():
     st.sidebar.info(model_info[model_choice])
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Made by:** Anmol Krishna")
-    st.sidebar.markdown("**Institute:** KIIT University")
     st.sidebar.markdown("[GitHub](https://github.com/Krishn4nmol/DermaScan)")
 
     model_key = MODEL_KEYS[model_choice]
@@ -264,8 +263,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <p style='text-align:center; color:gray; font-size:12px;'>
-    DermaScan | Anmol Krishna | KIIT University |
-    Trained on HAM10000 Dataset |
+    DermaScan | Anmol Krishna | Trained on HAM10000 Dataset |
     <a href='https://github.com/Krishn4nmol/DermaScan'>GitHub</a>
     </p>
     """, unsafe_allow_html=True)
