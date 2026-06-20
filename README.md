@@ -30,6 +30,8 @@
 
 ![Model Comparison](results/model_comparison.png)
 
+> *Note: Comparison chart shows validation metrics. Test set metrics are reported in the table above.*
+
 ### Per-class AUC (EfficientNet-B0)
 
 | Class | AUC |
