@@ -162,11 +162,11 @@ def main():
 
     st.markdown("""
     <h1 style='text-align:center; color:#2C7BE5;'>🔬 DermaScan</h1>
-    <h4 style='text-align:center; color:gray;'>Full Pipeline — Hair Removal + Color Normalization + CBAM</h4>
+    <h4 style='text-align:center; color:gray;'>Lightweight Deep Learning for Skin Lesion Detection</h4>
     <hr>
     """, unsafe_allow_html=True)
 
-    st.warning("⚠️ **Medical Disclaimer:** This tool is for educational and research purposes only. NOT a substitute for professional medical diagnosis.")
+    st.warning("⚠️ **Medical Disclaimer:** This tool is for educational and research purposes only. It is NOT a substitute for professional medical diagnosis. Always consult a qualified dermatologist.")
 
     st.sidebar.title("⚙️ Settings")
     model_choice = st.sidebar.selectbox(
@@ -193,7 +193,6 @@ def main():
     st.sidebar.info(model_info[model_choice])
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Made by:** Anmol Krishna")
-    st.sidebar.markdown("**Institute:** KIIT University")
     st.sidebar.markdown("[GitHub](https://github.com/Krishn4nmol/DermaScan)")
 
     model_key = MODEL_KEYS[model_choice]
@@ -282,8 +281,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <p style='text-align:center; color:gray; font-size:12px;'>
-    DermaScan | Anmol Krishna | KIIT University |
-    Trained on HAM10000 Dataset |
+    DermaScan | Anmol Krishna | Trained on HAM10000 Dataset |
     <a href='https://github.com/Krishn4nmol/DermaScan'>GitHub</a>
     </p>
     """, unsafe_allow_html=True)
